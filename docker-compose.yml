@@ -1,13 +1,11 @@
 version: '3.8'
 
-networks:
-  public-network:
-    driver: bridge
-
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:v1.3.4
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - 8084:8084
@@ -21,7 +19,7 @@ services:
       - LOG_COLOR=true
 
       - DATABASE_ENABLED=true
-      - DATABASE_URL=postgres://[USER]:[PASS]@[HOST]:[PORT]/[DATABASE_NAME]?schema=public
+      - DATABASE_URL=postgresql://postgres:xdc77ukoki8ju@postgres_whatsapp:5432/whatsapp?schema=public
       - DATABASE_SYNC_MESSAGES=true
       - DATABASE_SAVE_DATA_NEW_MESSAGE=true
       - DATABASE_SAVE_MESSAGE_UPDATE=true
@@ -40,8 +38,8 @@ services:
 
       - QRCODE_LIMIT=10
       - QRCODE_EXPIRATION_TIME=60
-      - QRCODE_LIGHT_COLOR='#ffffff'
-      - QRCODE_DARK_COLOR='#198754'
+      - QRCODE_LIGHT_COLOR=#ffffff
+      - QRCODE_DARK_COLOR=#198754
 
       - CONNECTION_TIMEOUT=300
 
@@ -56,18 +54,33 @@ services:
 
       - BASE_URL=
 
-      # - S3_ENABLED=false
-      # - S3_ACCESS_KEY=[ACCESS_KEY]
-      # - S3_SECRET_KEY=[SECRET_KEY]
-      # - S3_BUCKET=[BUCKET]
-      # - S3_PORT=9000
-      # - S3_ENDPOINT=[ENDPOINT]
-      # - S3_USE_SSL=false
+    networks:
+      - public-network
+    depends_on:
+      - postgres_whatsapp
+
+  postgres_whatsapp:
+    container_name: postgres_whatsapp
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: xdc77ukoki8ju
+      POSTGRES_DB: whatsapp
+    ports:
+      - '5439:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - public-network
 
+networks:
+  public-network:
+    driver: bridge
+
 volumes:
-  # In terminal run: docker volume create --name=instances_connecteds
   instances_connecteds:
-    external:
-      name: instances_connecteds
+    name: instances_connecteds
+    external: true
+  postgres_data:
+    name: postgres_data
